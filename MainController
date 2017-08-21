@@ -1,0 +1,95 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.XR.iOS;
+
+public class MainConroller : MonoBehaviour {
+
+	public GameObject waitPanel;
+	public UnityARGeneratePlane _unityARGeneratePlane;
+	public GameObject buttonMap;
+
+	public Text txt;
+
+	GPS _gps;
+	MyCompass _myCompass;
+	SpawnBuild _spawnBuild;
+
+	float minHeight = 10000;
+
+
+
+
+		
+
+
+	void Awake()
+	{
+		
+		_gps = GetComponent<GPS> ();
+		_myCompass = GetComponent<MyCompass> ();
+		_spawnBuild = GetComponent<SpawnBuild> ();
+
+		StartCoroutine (WaitAndColibrateCamera());
+	
+	}
+
+	void Update()
+	{
+		
+		//	 Update height
+		if (GameObject.FindGameObjectWithTag ("Player") != null) {
+			Transform tr = GameObject.FindGameObjectWithTag ("Player").GetComponent<Transform> ();
+			List<ARPlaneAnchorGameObject> ls = _unityARGeneratePlane.listPlane;
+
+			txt.text = tr.position.ToString ();
+
+			if (ls != null)
+			if (ls.Count >= 1)
+			if (ls [ls.Count - 1].gameObject != null)
+			if (minHeight > ls [ls.Count - 1].gameObject.transform.position.y) {
+				minHeight = ls [ls.Count - 1].gameObject.transform.position.y;
+				tr.position = new Vector3 (tr.position.x, ls [ls.Count - 1].gameObject.transform.position.y, tr.position.z);
+			}
+
+		}
+	}
+
+	IEnumerator WaitAndColibrateCamera()
+	{
+		
+		while (GameObject.FindGameObjectsWithTag ("Plane").Length == 0)
+			yield return null;
+
+
+			_myCompass.ColibrateCamera ();
+			_spawnBuild.ButtonSpawnGoogleMapEvent ();
+			waitPanel.SetActive (false);
+		buttonMap.SetActive (true);
+
+	}
+
+
+	public void ButtonGotoMapEvent()
+	{
+		FindObjectOfType<UnityARGeneratePlane> ().GetComponent<UnityARGeneratePlane> ().OnDestroy ();
+		UnityEngine.SceneManagement.SceneManager.LoadScene ("Map");
+	}
+}
+namespace UnityEngine{
+static  class GOTransformToPlane
+{
+
+	public static void UpdateHeight(GameObject go)
+	{
+		if (go == null)
+			return;
+			
+
+
+		Transform tr =  go.GetComponent<Transform> ();
+		tr.position = new Vector3 (tr.position.x, 2f, tr.position.z);
+	}
+}
+}
